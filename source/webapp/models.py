@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import Sum, F, ExpressionWrapper as E
+from django.contrib.sessions.models import Session
 
 
 DEFAULT_CATEGORY = 'other'
@@ -33,6 +34,7 @@ class Cart(models.Model):
     product = models.ForeignKey('webapp.Product', on_delete=models.CASCADE,
                                 verbose_name='Товар', related_name='in_cart')
     qty = models.IntegerField(verbose_name='Количество', default=1, validators=[MinValueValidator(1)])
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, verbose_name='Сессия', related_name='in_cart', null=True)
 
     def __str__(self):
         return f'{self.product.name} - {self.qty}'
@@ -59,9 +61,11 @@ class Cart(models.Model):
     #     return total
 
     @classmethod
-    def get_cart_total(cls):
+    def get_cart_total(cls, session):
         # запрос, так быстрее
-        total = cls.get_with_total().aggregate(cart_total=Sum('total'))
+        total = cls.get_with_total().filter(session=session).aggregate(cart_total=Sum('total'))
+        if total['cart_total'] is None:
+            total['cart_total'] = 0
         return total['cart_total']
 
     class Meta:

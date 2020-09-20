@@ -1,3 +1,4 @@
+from django.contrib.sessions.models import Session
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, CreateView, DeleteView
@@ -18,9 +19,14 @@ class CartView(ListView):
         return Cart.get_with_product()
 
     def get_context_data(self, *, object_list=None, **kwargs):
+        if not self.request.session.session_key:
+            self.request.session.save()
+        session = Session.objects.get(session_key=self.request.session.session_key)
         context = super().get_context_data(object_list=object_list, **kwargs)
-        context['cart_total'] = Cart.get_cart_total()
+        context['cart_total'] = Cart.get_cart_total(session=session)
         context['form'] = OrderForm()
+        # print(context['cart'])
+        context['cart'] = context['cart'].filter(session=session)
         return context
 
 
@@ -33,10 +39,11 @@ class CartAddView(CreateView):
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
-        # qty = 1
-        # бонус
         qty = form.cleaned_data.get('qty', 1)
-
+        if not self.request.session.session_key:
+            # self.request.session['products'] = []
+            self.request.session.save()
+        session = Session.objects.get(session_key=self.request.session.session_key)
         try:
             cart_product = Cart.objects.get(product=self.product)
             cart_product.qty += qty
@@ -44,8 +51,8 @@ class CartAddView(CreateView):
                 cart_product.save()
         except Cart.DoesNotExist:
             if qty <= self.product.amount:
-                Cart.objects.create(product=self.product, qty=qty)
-
+                Cart.objects.create(product=self.product, qty=qty, session=session)
+                # self.request.session['products'].append(self.product.pk)
         return redirect(self.get_success_url())
 
     def form_invalid(self, form):

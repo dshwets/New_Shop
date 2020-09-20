@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model, authenticate, login, logout, upd
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import PasswordChangeView, \
-    PasswordResetView, PasswordResetConfirmView
+    PasswordResetView, PasswordResetConfirmView, LoginView
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.http import HttpResponseRedirect, Http404
@@ -198,3 +198,15 @@ class UserPasswordResetView(UpdateView):
 
     def get_token(self):
         return AuthToken.get_token(self.kwargs.get('token'))
+
+
+class LoginViewSession(LoginView):
+    def form_valid(self, form):
+        user = User.objects.get(username=form.cleaned_data['username'])
+        self.request.session['_auth_user_id'] = user.pk
+        session_auth_hash = ''
+        if hasattr(form.get_user(), 'get_session_auth_hash'):
+            session_auth_hash = form.get_user().get_session_auth_hash()
+        self.request.session['_auth_user_hash'] = session_auth_hash
+        return super().form_valid(form)
+
