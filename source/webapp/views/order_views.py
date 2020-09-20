@@ -1,3 +1,5 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -102,22 +104,6 @@ class OrderCreateView(CreateView):
     form_class = OrderForm
     success_url = reverse_lazy('webapp:index')
 
-    # def form_valid(self, form):
-    #     response = super().form_valid(form)
-    #     order = self.object
-    #     # неоптимально: на каждый товар в корзине идёт 3 запроса:
-    #     # * добавить товар в заказ
-    #     # * обновить остаток товара
-    #     # * удалить товар из корзины
-    #     for item in Cart.objects.all():
-    #         product = item.product
-    #         qty = item.qty
-    #         order.order_products.create(product=product, qty=qty)
-    #         product.amount -= qty
-    #         product.save()
-    #         item.delete()
-    #     return response
-
     def form_valid(self, form):
         response = super().form_valid(form)
         order = self.object
@@ -125,6 +111,11 @@ class OrderCreateView(CreateView):
         # цикл сам ничего не создаёт, не обновляет, не удаляет
         # цикл работает только с объектами в памяти
         # и заполняет два списка: products и order_products
+        try:
+            order.user = self.request.user
+        except ValueError:
+            order.user = None
+        order.save()
         cart_products = Cart.objects.all()
         products = []
         order_products = []
@@ -145,3 +136,14 @@ class OrderCreateView(CreateView):
 
     def form_invalid(self, form):
         return redirect('webapp:cart_view')
+
+class WatchOrdersView(LoginRequiredMixin, ListView):
+    model = Order
+    template_name = 'order/orders_View.html'
+    context_object_name = 'orders'
+
+
+    def get_queryset(self):
+        data = super().get_queryset()
+        data = data.filter(user=self.request.user)
+        return data

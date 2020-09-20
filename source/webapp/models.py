@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import Sum, F, ExpressionWrapper as E
@@ -80,6 +81,8 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
     products = models.ManyToManyField('webapp.Product', related_name='orders', verbose_name='Товары',
                                       through='webapp.OrderProduct', through_fields=['order', 'product'])
+    user = models.ForeignKey(get_user_model(), verbose_name='Пользователь', related_name='orders',
+                             on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f'{self.name} - {self.phone} - {self.format_time()}'
