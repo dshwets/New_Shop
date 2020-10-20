@@ -1,7 +1,8 @@
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from accounts.views import RegisterView, RegisterActivateView, UserDetailView, \
-    UserChangeView, UserPasswordChangeView, UserPasswordResetEmailView, UserPasswordResetView, LoginViewSession
+    UserChangeView, UserPasswordChangeView, UserPasswordResetEmailView, UserPasswordResetView, LoginViewSession, \
+    json_echo_view
 
 app_name = 'accounts'
 
@@ -14,5 +15,6 @@ urlpatterns = [
     path('<int:pk>/update/', UserChangeView.as_view(), name='change'),
     path('password-change/', UserPasswordChangeView.as_view(), name='password_change'),
     path('password-reset/', UserPasswordResetEmailView.as_view(), name='password_reset_email'),
-    path('password-reset/<uuid:token>/', UserPasswordResetView.as_view(), name='password_reset')
+    path('password-reset/<uuid:token>/', UserPasswordResetView.as_view(), name='password_reset'),
+
 ]

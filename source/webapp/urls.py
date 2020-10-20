@@ -1,5 +1,6 @@
 from django.urls import path, include
 
+from accounts.views import json_echo_view, get_token_view
 from webapp.views import IndexView, ProductView, ProductCreateView, \
     ProductUpdateView, ProductDeleteView, CartView, CartAddView, \
     CartDeleteView, CartDeleteOneView, OrderCreateView, WatchOrdersView
@@ -10,6 +11,8 @@ app_name = 'webapp'
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
+    path('echo/', json_echo_view),
+    path('get_token/', get_token_view),
 
     path('product/', include([
         path('add/', ProductCreateView.as_view(), name='product_create'),

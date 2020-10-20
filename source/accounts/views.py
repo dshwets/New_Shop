@@ -5,7 +5,7 @@ from django.contrib.auth.views import PasswordChangeView, \
     PasswordResetView, PasswordResetConfirmView, LoginView
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import View, FormView, DetailView, CreateView, UpdateView
@@ -16,23 +16,28 @@ from accounts.forms import MyUserCreationForm, UserChangeForm, ProfileChangeForm
 from .models import AuthToken, Profile
 
 
-# def login_view(request):
-#     context = {}
-#     if request.method == 'POST':
-#         username = request.POST.get('username')
-#         password = request.POST.get('password')
-#         user = authenticate(request, username=username, password=password)
-#         if user is not None:
-#             login(request, user)
-#             return redirect('webapp:index')
-#         else:
-#             context['has_error'] = True
-#     return render(request, 'registration/login.html', context=context)
-# 
-# 
-# def logout_view(request):
-#     logout(request)
-#     return redirect('webapp:index')
+import json
+from datetime import datetime
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+
+@ensure_csrf_cookie
+def get_token_view(request,*args,**kwargs):
+    if request.method == 'GET':
+        return HttpResponse
+    return HttpResponseNotAllowed('Only get request are alowed')
+
+@ensure_csrf_cookie
+def json_echo_view(request, *args, **kwargs):
+    answer = {
+        'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'method': request.method,
+    }
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        answer['data'] = data
+    return JsonResponse(answer)
+
 
 
 class RegisterView(CreateView):
